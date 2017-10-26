@@ -3,6 +3,8 @@
 #include <ctype.h>
 #include <string.h>
 
+typedef enum {NORMAL, READING_IDENTIFIER} state_t;
+
 void yyerror(char *msg) {
 	printf("error: %s\n", msg);
 	exit(1);
@@ -48,11 +50,14 @@ void read_and_write_identifiers(FILE * input, FILE * output) {
 	yytext = (char *)calloc(bufsize, sizeof(char));
 
 	int c;
+	state_t state = NORMAL;
 
 	/* lese Zeichen für Zeichen ein */
 	while ((c = fgetc(input)) != EOF) {
-		if (isalpha(c)) {
+		if (isalpha(c) || (isdigit(c) && state == READING_IDENTIFIER)) {
 			/* wir sind auf einen Bezeichner gestoßen! */
+			state = READING_IDENTIFIER;
+
 			bufsize += 1;
 			yytext = (char *)realloc(yytext, bufsize);
 			yytext[bufsize-1] = 0;
@@ -62,6 +67,7 @@ void read_and_write_identifiers(FILE * input, FILE * output) {
 			/* Nur wenn wir eben einen Bezeichner eingelesen haben,
 			 * geben wir ihn auch aus. Zahlen und so lassen wir weg.
 			 */
+			state = NORMAL;
 			if (bufsize > 1) {
 				fprintf_if_not_special_token(yytext, output);
 				bufsize = 1;
