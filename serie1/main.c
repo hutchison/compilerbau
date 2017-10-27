@@ -59,7 +59,7 @@ void read_and_write_identifiers(FILE * input, FILE * output) {
 			state = READING_IDENTIFIER;
 
 			bufsize += 1;
-			yytext = (char *)realloc(yytext, bufsize);
+			yytext = (char *)realloc(yytext, bufsize*sizeof(char));
 			yytext[bufsize-1] = 0;
 
 			yytext[bufsize-2] = c;
