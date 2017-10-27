@@ -6,7 +6,7 @@
 typedef enum {NORMAL, READING_IDENTIFIER} state_t;
 
 void yyerror(char *msg) {
-	printf("error: %s\n", msg);
+	fprintf(stderr, "error: %s\n", msg);
 	exit(1);
 }
 
@@ -84,6 +84,9 @@ int main(int argc, char *argv[])
 	FILE * input = stdin;
 	FILE * output = stdout;
 
+	if (argc > 3) {
+		yyerror("wrong number of parameters");
+	}
 	if (argc > 1) {
 		input = fopen(argv[1], "r");
 		if (input == NULL) {
@@ -96,11 +99,11 @@ int main(int argc, char *argv[])
 			yyerror("cannot open file for writing");
 		}
 	}
-	if (argc > 3) {
-		yyerror("wrong number of parameters");
-	}
 
 	read_and_write_identifiers(input, output);
+
+	fclose(input);
+	fclose(output);
 
 	return 0;
 }
