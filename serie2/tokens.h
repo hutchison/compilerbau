@@ -28,6 +28,7 @@ typedef struct token_list_element {
 
 void append(token_t);       /* add a token to the list */
 void output_token_list();   /* output the token list to yyout */
+void delete_token_list();   /* delete the token list */
 
 int iskeyword();            /* returns -1 iff current token is not a keyword */
 

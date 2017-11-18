@@ -35,9 +35,140 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	/* ADD YOUR CODE HERE */
+	next_char();
+	while (ch != EOF) {
+		if (isalpha(ch)) {
+			scanID();
+
+			keyword_index = iskeyword(yytext);
+			if (keyword_index >= 0) {
+				append(keyword_index);
+			} else {
+				append(IDENT);
+			}
+
+			buffer_reset();
+			continue;
+		} else if (isdigit(ch)) {
+			i = scanNUMBER();
+
+			if (i == 0) {
+				append(INTEGER);
+			} else {
+				append(REAL);
+			}
+
+			buffer_reset();
+			continue;
+		} else if (ch == ':') { /* Sonderfall ASSIGN UND COLON */
+			next_char();
+			if (ch == '=') {
+				append(ASSIGN);
+			} else {
+				append(COLON);
+				buffer_reset();
+				continue;
+			}
+		} else if (ch == '<') {
+			next_char();
+			if (ch == '>') {
+				append(NE);
+			} else if (ch == '=') {
+				append(LEQ);
+			} else {
+				append(LE);
+				buffer_reset();
+				continue;
+			}
+		} else if (ch == '>') {
+			next_char();
+			if (ch == '=') {
+				append(GEQ);
+			} else {
+				append(GE);
+				buffer_reset();
+				continue;
+			}
+		} else if (ch == '.') { /* Sonderfall RANGE UND PERIOD */
+			next_char();
+			if (ch == '.') {
+				append(RANGE);
+			} else {
+				append(PERIOD);
+				buffer_reset();
+				continue;
+			}
+		} else {
+			switch (ch) {
+				case '"':
+					scanSTRING();
+					append(STRING);
+					break;
+				case '\'':
+					scanCHAR();
+					append(CHAR);
+					break;
+				case '|':
+					append(OR);
+					break;
+				case '&':
+					append(AND);
+					break;
+				case '#':
+					append(NE);
+					break;
+				case '=':
+					append(EQ);
+					break;
+				case '+':
+					append(PLUS);
+					break;
+				case '-':
+					append(MINUS);
+					break;
+				case '*':
+					append(ASTERISK);
+					break;
+				case '/':
+					append(SLASH);
+					break;
+				case '~':
+					append(NOT);
+					break;
+				case ';':
+					append(SEMICOLON);
+					break;
+				/* PERIOD: Sonderfall mit RANGE */
+				/* COLON: Sonderfall mit ASSIGN */
+				case ',':
+					append(COMMA);
+					break;
+				case '(':
+					append(LPAREN);
+					break;
+				case ')':
+					append(RPAREN);
+					break;
+				case '[':
+					append(LBRACK);
+					break;
+				case ']':
+					append(RBRACK);
+					break;
+				default:
+					break;
+			}
+		}
+
+		buffer_reset();
+		next_char();
+	}
+
+	output_token_list();
+	delete_token_list();
 
 	buffer_destroy();
+
 	fclose(yyin);
 	fclose(yyout);
 
