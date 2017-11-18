@@ -37,7 +37,31 @@ int main(int argc, char* argv[]) {
 
 	next_char();
 	while (ch != EOF) {
-		if (isalpha(ch)) {
+		if (ch == '(') {
+			next_char();
+			if (ch == '*') { /* Kommentarmodus */
+				next_char();
+
+				while (1) {
+					next_char();
+
+					if (ch == EOF) {
+						yyerror("comment ended unexpectedly with EOF");
+					} else if (ch == '*') {
+						next_char();
+						if (ch == EOF) {
+							yyerror("comment ended unexpectedly with EOF");
+						} else if (ch == ')') {
+							break;
+						}
+					}
+				}
+			} else {
+				append(LPAREN);
+				buffer_reset();
+				continue;
+			}
+		} else if (isalpha(ch)) {
 			scanID();
 
 			keyword_index = iskeyword(yytext);
@@ -143,9 +167,7 @@ int main(int argc, char* argv[]) {
 				case ',':
 					append(COMMA);
 					break;
-				case '(':
-					append(LPAREN);
-					break;
+				/* LPAREN: Sonderfall mit Kommentar */
 				case ')':
 					append(RPAREN);
 					break;
