@@ -61,25 +61,34 @@ void append(token_t t) {
 }
 
 void output_token_list() {
-	token_list_element * elem;
+	if (token_list) {
+		token_list_element * elem;
 
-	for (elem = token_list; elem != NULL; elem = elem->next) {
-		if (elem->type == INTEGER) {
-			fprintf(yyout, "<INTEGER, %d>", elem->value.integer_constant);
-		} else if (elem->type == REAL) {
-			fprintf(yyout, "<REAL, %f>", elem->value.real_constant);
-		} else if (elem->type == STRING) {
-			fprintf(yyout, "<STRING, %s>", elem->value.string_constant);
-		} else if (elem->type == CHAR) {
-			fprintf(yyout, "<CHAR, %c>", elem->value.char_constant);
-		} else if (elem->type == IDENT) {
-			fprintf(yyout, "<IDENT, %s>", elem->value.string_constant);
-		} else {
-			fprintf(yyout, "<%s>", token_names[elem->type]);
+		for (elem = token_list; elem != NULL; elem = elem->next) {
+			switch (elem->type) {
+				case INTEGER:
+					fprintf(yyout, "<INTEGER, %d>", elem->value.integer_constant);
+					break;
+				case REAL:
+					fprintf(yyout, "<REAL, %f>", elem->value.real_constant);
+					break;
+				case STRING:
+					fprintf(yyout, "<STRING, %s>", elem->value.string_constant);
+					break;
+				case IDENT:
+					fprintf(yyout, "<IDENT, %s>", elem->value.string_constant);
+					break;
+				case CHAR:
+					fprintf(yyout, "<CHAR, %c>", elem->value.char_constant);
+					break;
+				default:
+					fprintf(yyout, "<%s>", token_names[elem->type]);
+					break;
+			}
+			fprintf(yyout, " ");
 		}
-		fprintf(yyout, " ");
+		fprintf(yyout, "\n");
 	}
-	fprintf(yyout, "\n");
 }
 
 void delete_token_list() {
