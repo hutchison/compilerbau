@@ -1,2 +1,5 @@
 folien/*.pdf
 manuals/*.pdf
+*.o
+moco
+serie2/musterloesung/
