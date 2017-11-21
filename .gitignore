@@ -3,3 +3,4 @@ manuals/*.pdf
 *.o
 moco
 serie2/musterloesung/
+serie*/*.pdf
