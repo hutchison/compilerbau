@@ -29,4 +29,5 @@ BEGIN
 	IF x<=15 THEN
 		x := x - 1;
 	END;
-END HelloWorld.
+END
+HelloWorld.
