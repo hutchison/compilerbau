@@ -13,7 +13,7 @@ main.c: scanner.c diagnosis.h parser.h
 scanner.l: parser.h diagnosis.h
 
 scanner.c: scanner.l
-	flex scanner.l
+	flex $<
 
 parser.c: scanner.c parser.h diagnosis.h
 
