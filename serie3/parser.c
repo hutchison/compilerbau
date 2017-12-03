@@ -68,33 +68,35 @@ token has a value, it is also printed.
 \warning This function must not be changed.
 */
 void NEXT() {
-    assert(yyout);
+	assert(yyout);
 
-    currentToken = yylex();
+	currentToken = yylex();
 
-    indent();
-    fprintf(yyout, "read symbol in line %d: %s ", yylineno, tokenNames[currentToken]);
+	/*
+	indent();
+	fprintf(yyout, "read symbol in line %d: %s ", yylineno, tokenNames[currentToken]);
 
-    switch (currentToken) {
-        case (CHAR):
-        case (STRING):
-        case (IDENT): {
-            fprintf(yyout, "(%s)", yytext);
-            break;
-        }
-        case (INTEGER): {
-            fprintf(yyout, "(%d)", atoi(yytext));
-            break;
-        }
-        case (REAL): {
-            fprintf(yyout, "(%.10f)", atof(yytext));
-            break;
-        }
-        default:
-        {}
-    }
+	switch (currentToken) {
+		case (CHAR):
+		case (STRING):
+		case (IDENT): {
+			fprintf(yyout, "(%s)", yytext);
+			break;
+		}
+		case (INTEGER): {
+			fprintf(yyout, "(%d)", atoi(yytext));
+			break;
+		}
+		case (REAL): {
+			fprintf(yyout, "(%.10f)", atof(yytext));
+			break;
+		}
+		default:
+			{}
+	}
 
-    fprintf(yyout, "\n");
+	fprintf(yyout, "\n");
+	*/
 }
 
 
@@ -106,17 +108,17 @@ indentation width.
 \warning This function must not be changed.
 */
 void indent() {
-    unsigned int i;
+	unsigned int i;
 
-    assert(yyout);
+	assert(yyout);
 
-    for (i = 0; i < indent_current; ++i) {
-        if (i % indent_step == 0) {
-            fprintf(yyout, "|");
-        } else {
-            fprintf(yyout, " ");
-        }
-    }
+	for (i = 0; i < indent_current; ++i) {
+		if (i % indent_step == 0) {
+			fprintf(yyout, "|");
+		} else {
+			fprintf(yyout, " ");
+		}
+	}
 }
 
 
@@ -132,7 +134,7 @@ not match.
 \warning This function must not be changed
 */
 int TEST(yytokentype s) {
-    return (s == currentToken);
+	return (s == currentToken);
 }
 
 
@@ -147,13 +149,12 @@ token.
 \warning This function must not be changed
 */
 void MATCH(yytokentype s) {
-    if (TEST(s)) {
-        NEXT();
-    } else {
-        fprintf(stderr, "unexpected %s, expected %s\n",
-                tokenNames[currentToken], tokenNames[s]);
-        yyerror("syntax error");
-    }
+	if (TEST(s)) {
+		NEXT();
+	} else {
+		fprintf(stderr, "unexpected %s, expected %s\n", tokenNames[currentToken], tokenNames[s]);
+		yyerror("syntax error");
+	}
 }
 
 
@@ -166,10 +167,10 @@ symbol) and increases the indentation.
 \warning This function must not be changed
 */
 void entering(char* s) {
-    assert(s);
-    indent();
-    fprintf(yyout, "entering %s\n", s);
-    indent_current += indent_step;
+	assert(s);
+	indent();
+	fprintf(yyout, "entering %s\n", s);
+	indent_current += indent_step;
 }
 
 
@@ -182,10 +183,10 @@ symbol) and decreases the indentation.
 \warning This function must not be changed
 */
 void leaving(char* s) {
-    assert(s);
-    indent_current -= indent_step;
-    indent();
-    fprintf(yyout, "leaving %s\n", s);
+	assert(s);
+	indent_current -= indent_step;
+	indent();
+	fprintf(yyout, "leaving %s\n", s);
 }
 
 
@@ -201,10 +202,15 @@ output to #yyout.
 \warning This function must not be changed
 */
 void yyparse() {
-    /* read first token */
-    NEXT();
-    /* process start symbol */
-    module();
+	/* read first token */
+	NEXT();
+	/* process start symbol */
+	// module();
+	while (currentToken != END_OF_FILE) {
+		fprintf(yyout, "<%s> ", tokenNames[currentToken]);
+		NEXT();
+	}
+	fprintf(yyout, "\n");
 }
 
 
@@ -212,20 +218,62 @@ void yyparse() {
   please add your own code below this comment
  *************************************************************************/
 
+void print_current_token() {
+	switch (currentToken) {
+		case (CHAR):
+		case (STRING):
+		case (IDENT): {
+			fprintf(yyout, "<%s (%s)> ", tokenNames[currentToken], yytext);
+			break;
+		}
+		case (INTEGER): {
+			fprintf(yyout, "<%s (%d)> ", tokenNames[currentToken], atoi(yytext));
+			break;
+		}
+		case (REAL): {
+			fprintf(yyout, "<%s (%.10f)> ", tokenNames[currentToken], atof(yytext));
+			break;
+		}
+		default: {
+			fprintf(yyout, "<%s> ", tokenNames[currentToken]);
+		}
+	}
+}
+
+void print_tokens() {
+	NEXT();
+	while (currentToken != END_OF_FILE) {
+		print_current_token();
+		NEXT();
+	}
+	fprintf(yyout, "\n");
+}
+
 /*!
  \verbatim
- module ::= 'KEY_MODULE' 'IDENT' 'SEMICOLON' block 'IDENT' 'PERIOD'
+ module ::= 'KEY_MODULE' 'IDENT' 'SEMICOLON' block 'KEY_END' 'IDENT' 'PERIOD'
  \endverbatim
  */
 void module() {
-    entering("module");
-    
-    MATCH(KEY_MODULE);
-    MATCH(IDENT);
-    MATCH(SEMICOLON);
-    //block();
-    MATCH(IDENT);
-    MATCH(PERIOD);
-    
-    leaving("module");
+	entering("module");
+
+	MATCH(KEY_MODULE);
+	MATCH(IDENT);
+	MATCH(SEMICOLON);
+
+	block();
+
+	MATCH(IDENT);
+	MATCH(PERIOD);
+
+	leaving("module");
+}
+
+void block() {
+	entering("block");
+
+	MATCH(KEY_BEGIN);
+	MATCH(KEY_END);
+
+	leaving("block");
 }

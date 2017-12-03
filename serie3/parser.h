@@ -38,6 +38,9 @@ void yyparse();             /*!< \brief parse the file #yyin using #yylex */
   please add your own code below this comment
  *************************************************************************/
 
+void print_tokens();
+void print_current_token();
 void module();
+void block();
 
 #endif
