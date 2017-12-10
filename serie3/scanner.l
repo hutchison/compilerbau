@@ -20,7 +20,15 @@ letter [a-zA-Z]
 character [^'\n\r]
 stringelement [^"]
 
+%x COMMENT
+
 %%
+
+"(*"			{ BEGIN(COMMENT); comment_depth += 1; }
+<COMMENT>"(*"		{ BEGIN(COMMENT); comment_depth += 1; }
+<COMMENT>"*)"		{ comment_depth -= 1; if (comment_depth == 0) BEGIN(INITIAL); }
+<COMMENT>.		{ /* skip comment stuff */ }
+<COMMENT>[\n\r]		{ /* skip comment newlines */ }
 
 <<EOF>>			{ return END_OF_FILE; }
 [ \n\r\t]		{} /* skip whitespace */
@@ -84,6 +92,8 @@ stringelement [^"]
 {digit}{digit}*			{ return INTEGER; }
 {digit}{digit}*"."{digit}*	{ return REAL; }
 "'"{letter}"'"			{ return CHAR; }
-"\""{stringelement}*"\""		{ return STRING; }
+"\""{stringelement}*"\""	{ return STRING; }
+
+.			{ yyerror("lexical error"); }
 
 %%

@@ -1,4 +1,4 @@
-.PHONY: clean
+.PHONY: clean test
 
 OBJECTS := main.o scanner.o parser.o diagnosis.o
 GENERATED := scanner.c scanner.h
@@ -21,3 +21,6 @@ diagnosis.c: diagnosis.h scanner.c
 
 clean:
 	$(RM) $(OBJECTS) $(GENERATED) moco
+
+test:
+	./moco hello.m

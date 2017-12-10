@@ -34,13 +34,23 @@ void indent();              /*!< \brief organize proper indentation */
 
 void yyparse();             /*!< \brief parse the file #yyin using #yylex */
 
-/*************************************************************************
-  please add your own code below this comment
- *************************************************************************/
+/*
+ * please add your own code below this comment
+ */
 
 void print_tokens();
 void print_current_token();
 void module();
 void block();
+void declaration();
+void constant_declaration();
+void type_declaration();
+void variable_declaration();
+void procedure_declaration();
+void expression();
+void type_denoter();
+void parameters();
+void parameter();
+void subrange();
 
 #endif

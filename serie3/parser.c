@@ -72,31 +72,7 @@ void NEXT() {
 
 	currentToken = yylex();
 
-	/*
-	indent();
-	fprintf(yyout, "read symbol in line %d: %s ", yylineno, tokenNames[currentToken]);
-
-	switch (currentToken) {
-		case (CHAR):
-		case (STRING):
-		case (IDENT): {
-			fprintf(yyout, "(%s)", yytext);
-			break;
-		}
-		case (INTEGER): {
-			fprintf(yyout, "(%d)", atoi(yytext));
-			break;
-		}
-		case (REAL): {
-			fprintf(yyout, "(%.10f)", atof(yytext));
-			break;
-		}
-		default:
-			{}
-	}
-
-	fprintf(yyout, "\n");
-	*/
+	print_current_token();
 }
 
 
@@ -173,7 +149,6 @@ void entering(char* s) {
 	indent_current += indent_step;
 }
 
-
 /*!
 This function prints the name of a left function (usually for a nonterminal
 symbol) and decreases the indentation.
@@ -188,7 +163,6 @@ void leaving(char* s) {
 	indent();
 	fprintf(yyout, "leaving %s\n", s);
 }
-
 
 /*!
 This function is the starting point for a top-down parser for Modula-2. It
@@ -205,20 +179,18 @@ void yyparse() {
 	/* read first token */
 	NEXT();
 	/* process start symbol */
-	// module();
-	while (currentToken != END_OF_FILE) {
-		fprintf(yyout, "<%s> ", tokenNames[currentToken]);
-		NEXT();
-	}
-	fprintf(yyout, "\n");
+	module();
 }
 
 
-/*************************************************************************
-  please add your own code below this comment
- *************************************************************************/
+/*
+ * please add your own code below this comment
+ */
 
 void print_current_token() {
+	indent();
+	fprintf(yyout, "read symbol in line %d:\t", yylineno);
+
 	switch (currentToken) {
 		case (CHAR):
 		case (STRING):
@@ -238,21 +210,21 @@ void print_current_token() {
 			fprintf(yyout, "<%s> ", tokenNames[currentToken]);
 		}
 	}
+	fprintf(yyout, "\n");
 }
 
 void print_tokens() {
 	NEXT();
 	while (currentToken != END_OF_FILE) {
-		print_current_token();
 		NEXT();
 	}
 	fprintf(yyout, "\n");
 }
 
 /*!
- \verbatim
- module ::= 'KEY_MODULE' 'IDENT' 'SEMICOLON' block 'KEY_END' 'IDENT' 'PERIOD'
- \endverbatim
+ * \verbatim
+ * module ::= 'KEY_MODULE' 'IDENT' 'SEMICOLON' block 'KEY_END' 'IDENT' 'PERIOD'
+ * \endverbatim
  */
 void module() {
 	entering("module");
@@ -272,8 +244,183 @@ void module() {
 void block() {
 	entering("block");
 
+	declaration();
+
 	MATCH(KEY_BEGIN);
 	MATCH(KEY_END);
 
 	leaving("block");
+}
+
+void declaration() {
+	entering("declaration");
+
+	switch (currentToken) {
+		case (KEY_CONST): {
+			MATCH(KEY_CONST);
+			constant_declaration();
+			declaration();
+		}
+		case (KEY_TYPE): {
+			MATCH(KEY_TYPE);
+			type_declaration();
+			declaration();
+		}
+		case (KEY_VAR): {
+			MATCH(KEY_VAR);
+			variable_declaration();
+			declaration();
+		}
+		case (KEY_PROCEDURE): {
+			procedure_declaration();
+			declaration();
+		}
+		default: {}
+	}
+
+	leaving("declaration");
+}
+
+void constant_declaration() {
+	if (currentToken == IDENT) {
+		entering("constant declaration");
+
+		MATCH(IDENT);
+		MATCH(EQ);
+
+		expression();
+
+		MATCH(SEMICOLON);
+
+		leaving("constant declaration");
+
+		constant_declaration();
+	}
+}
+
+void type_declaration() {
+	if (currentToken == IDENT) {
+		entering("type declaration");
+
+		MATCH(IDENT);
+		MATCH(EQ);
+
+		type_denoter();
+
+		MATCH(SEMICOLON);
+
+		leaving("type declaration");
+
+		type_declaration();
+	}
+
+}
+
+void variable_declaration() {
+	if (currentToken == IDENT) {
+		entering("variable declaration");
+
+		MATCH(IDENT);
+		MATCH(COLON);
+
+		type_denoter();
+
+		MATCH(SEMICOLON);
+
+		leaving("variable declaration");
+
+		variable_declaration();
+	}
+
+}
+
+void procedure_declaration() {
+	entering("procedure declaration");
+
+	MATCH(KEY_PROCEDURE);
+	MATCH(IDENT);
+
+	parameters();
+
+	MATCH(COLON);
+
+	type_denoter();
+
+	MATCH(SEMICOLON);
+
+	block();
+
+	MATCH(IDENT);
+	MATCH(SEMICOLON);
+
+	leaving("procedure declaration");
+}
+
+void expression() {
+
+}
+
+void type_denoter() {
+	switch (currentToken) {
+		case (IDENT): {
+			MATCH(IDENT);
+			break;
+		}
+		case (KEY_INTEGER): {
+			MATCH(KEY_INTEGER);
+			break;
+		}
+		case (KEY_REAL): {
+			MATCH(KEY_REAL);
+			break;
+		}
+		case (KEY_CHAR): {
+			MATCH(KEY_CHAR);
+			break;
+		}
+		case (KEY_ARRAY): {
+			MATCH(KEY_ARRAY);
+			subrange();
+			MATCH(KEY_OF);
+			type_denoter();
+			break;
+		}
+		default: {}
+	}
+
+}
+
+void parameters() {
+	entering("parameters");
+	MATCH(LPAREN);
+
+	parameter();
+
+	MATCH(SEMICOLON);
+	MATCH(RPAREN);
+
+	leaving("parameters");
+}
+
+void parameter() {
+	if (currentToken == KEY_VAR) {
+		entering("parameter");
+
+		MATCH(KEY_VAR);
+		MATCH(IDENT);
+		MATCH(COLON);
+
+		type_denoter();
+		leaving("parameter");
+
+		parameter();
+	}
+}
+
+void subrange() {
+	MATCH(LBRACK);
+	expression();
+	MATCH(RANGE);
+	expression();
+	MATCH(RBRACK);
 }

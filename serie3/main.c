@@ -27,9 +27,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	/* parse input file */
-	//yyparse();
-
-	print_tokens();
+	yyparse();
 
 	/* close input and output and tidy lexer */
 	fclose(yyin);
