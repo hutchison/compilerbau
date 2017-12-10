@@ -47,10 +47,24 @@ void constant_declaration();
 void type_declaration();
 void variable_declaration();
 void procedure_declaration();
-void expression();
-void type_denoter();
 void parameters();
 void parameter();
+void variable_designator();
+void variable_designator_brackets();
+void type_denoter();
 void subrange();
+void statement();
+void statement_sequence();
+void empty_statement();
+void assignment_statement();
+void function_call();
+void return_statement();
+void if_statement();
+void while_statement();
+void repeat_statement();
+void for_statement();
+void expression();
+void expression1();
+void constant_literal();
 
 #endif

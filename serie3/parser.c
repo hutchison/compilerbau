@@ -126,6 +126,8 @@ token.
 */
 void MATCH(yytokentype s) {
 	if (TEST(s)) {
+		// indent();
+		// fprintf(yyout, "matching correct %s\n", tokenNames[currentToken]);
 		NEXT();
 	} else {
 		fprintf(stderr, "unexpected %s, expected %s\n", tokenNames[currentToken], tokenNames[s]);
@@ -146,6 +148,7 @@ void entering(char* s) {
 	assert(s);
 	indent();
 	fprintf(yyout, "entering %s\n", s);
+	fflush(yyout);
 	indent_current += indent_step;
 }
 
@@ -162,6 +165,7 @@ void leaving(char* s) {
 	indent_current -= indent_step;
 	indent();
 	fprintf(yyout, "leaving %s\n", s);
+	fflush(yyout);
 }
 
 /*!
@@ -189,25 +193,25 @@ void yyparse() {
 
 void print_current_token() {
 	indent();
-	fprintf(yyout, "read symbol in line %d:\t", yylineno);
+	fprintf(yyout, "read symbol in line %d: ", yylineno);
 
 	switch (currentToken) {
 		case (CHAR):
 		case (STRING):
 		case (IDENT): {
-			fprintf(yyout, "<%s (%s)> ", tokenNames[currentToken], yytext);
+			fprintf(yyout, "%s (%s) ", tokenNames[currentToken], yytext);
 			break;
 		}
 		case (INTEGER): {
-			fprintf(yyout, "<%s (%d)> ", tokenNames[currentToken], atoi(yytext));
+			fprintf(yyout, "%s (%d) ", tokenNames[currentToken], atoi(yytext));
 			break;
 		}
 		case (REAL): {
-			fprintf(yyout, "<%s (%.10f)> ", tokenNames[currentToken], atof(yytext));
+			fprintf(yyout, "%s (%.10f) ", tokenNames[currentToken], atof(yytext));
 			break;
 		}
 		default: {
-			fprintf(yyout, "<%s> ", tokenNames[currentToken]);
+			fprintf(yyout, "%s ", tokenNames[currentToken]);
 		}
 	}
 	fprintf(yyout, "\n");
@@ -247,38 +251,53 @@ void block() {
 	declaration();
 
 	MATCH(KEY_BEGIN);
+
+	statement_sequence();
+
 	MATCH(KEY_END);
 
 	leaving("block");
 }
 
 void declaration() {
-	entering("declaration");
-
 	switch (currentToken) {
 		case (KEY_CONST): {
+			entering("declaration");
 			MATCH(KEY_CONST);
 			constant_declaration();
+			leaving("declaration");
+
 			declaration();
+			break;
 		}
 		case (KEY_TYPE): {
+			entering("declaration");
 			MATCH(KEY_TYPE);
 			type_declaration();
+			leaving("declaration");
+
 			declaration();
+			break;
 		}
 		case (KEY_VAR): {
+			entering("declaration");
 			MATCH(KEY_VAR);
 			variable_declaration();
+			leaving("declaration");
+
 			declaration();
+			break;
 		}
 		case (KEY_PROCEDURE): {
+			entering("declaration");
 			procedure_declaration();
+			leaving("declaration");
+
 			declaration();
+			break;
 		}
 		default: {}
 	}
-
-	leaving("declaration");
 }
 
 void constant_declaration() {
@@ -356,40 +375,6 @@ void procedure_declaration() {
 	leaving("procedure declaration");
 }
 
-void expression() {
-
-}
-
-void type_denoter() {
-	switch (currentToken) {
-		case (IDENT): {
-			MATCH(IDENT);
-			break;
-		}
-		case (KEY_INTEGER): {
-			MATCH(KEY_INTEGER);
-			break;
-		}
-		case (KEY_REAL): {
-			MATCH(KEY_REAL);
-			break;
-		}
-		case (KEY_CHAR): {
-			MATCH(KEY_CHAR);
-			break;
-		}
-		case (KEY_ARRAY): {
-			MATCH(KEY_ARRAY);
-			subrange();
-			MATCH(KEY_OF);
-			type_denoter();
-			break;
-		}
-		default: {}
-	}
-
-}
-
 void parameters() {
 	entering("parameters");
 	MATCH(LPAREN);
@@ -417,10 +402,327 @@ void parameter() {
 	}
 }
 
+/*
+ * x
+ * x[13]
+ * x[13][23]
+ */
+void variable_designator() {
+	entering("variable designator");
+
+	MATCH(IDENT);
+
+	variable_designator_brackets();
+
+	leaving("variable designator");
+}
+
+void variable_designator_brackets() {
+	if (currentToken == LBRACK) {
+		MATCH(LBRACK);
+		expression();
+		MATCH(RBRACK);
+		variable_designator_brackets();
+	}
+}
+
+void type_denoter() {
+	entering("type denoter");
+
+	switch (currentToken) {
+		case (IDENT): {
+			MATCH(IDENT);
+			break;
+		}
+		case (KEY_INTEGER): {
+			MATCH(KEY_INTEGER);
+			break;
+		}
+		case (KEY_REAL): {
+			MATCH(KEY_REAL);
+			break;
+		}
+		case (KEY_CHAR): {
+			MATCH(KEY_CHAR);
+			break;
+		}
+		case (KEY_ARRAY): {
+			MATCH(KEY_ARRAY);
+			subrange();
+			MATCH(KEY_OF);
+			type_denoter();
+			break;
+		}
+		default: {}
+	}
+
+	leaving("type denoter");
+}
+
 void subrange() {
+	entering("subrange");
+
 	MATCH(LBRACK);
 	expression();
 	MATCH(RANGE);
 	expression();
 	MATCH(RBRACK);
+
+	leaving("subrange");
+}
+
+void statement() {
+	entering("statement");
+
+	switch (currentToken) {
+		case (SEMICOLON): {
+			empty_statement();
+			break;
+		}
+		case (IDENT): {
+			assignment_statement();
+			break;
+		}
+		case (KEY_RETURN): {
+			return_statement();
+			break;
+		}
+		case (KEY_IF): {
+			if_statement();
+			break;
+		}
+		case (KEY_WHILE): {
+			while_statement();
+			break;
+		}
+		case (KEY_REPEAT): {
+			repeat_statement();
+			break;
+		}
+		case (KEY_FOR): {
+			for_statement();
+			break;
+		}
+		default: {}
+	}
+
+	leaving("statement");
+}
+
+void statement_sequence() {
+	entering("statement sequence");
+
+	statement();
+
+	if (currentToken == SEMICOLON) {
+		MATCH(SEMICOLON);
+		statement_sequence();
+	}
+
+	leaving("statement sequence");
+}
+
+void empty_statement() {
+	entering("empty statement");
+	leaving("empty statement");
+}
+
+void assignment_statement() {
+	entering("assignment statement");
+
+	variable_designator();
+	MATCH(ASSIGN);
+	expression();
+
+	leaving("assignment statement");
+}
+
+void function_call() {
+
+}
+
+void return_statement() {
+	entering("return statement");
+
+	MATCH(KEY_RETURN);
+	expression();
+
+	leaving("return statement");
+}
+
+void if_statement() {
+	entering("if statement");
+
+	MATCH(KEY_IF);
+	expression();
+	MATCH(KEY_THEN);
+	statement_sequence();
+	/* TODO: elsif */
+	/* TODO: else */
+	MATCH(KEY_END);
+
+	leaving("if statement");
+}
+
+void while_statement() {
+	entering("while statement");
+
+	MATCH(KEY_WHILE);
+	expression();
+	MATCH(KEY_DO);
+	statement_sequence();
+	MATCH(KEY_END);
+
+	leaving("while statement");
+}
+
+void repeat_statement() {
+	entering("repeat statement");
+
+	MATCH(KEY_REPEAT);
+	statement_sequence();
+	MATCH(KEY_UNTIL);
+	expression();
+
+	leaving("repeat statement");
+}
+
+void for_statement() {
+	entering("for statement");
+
+	MATCH(KEY_FOR);
+	variable_designator();
+	MATCH(ASSIGN);
+	expression();
+	MATCH(KEY_TO);
+	expression();
+	MATCH(KEY_DO);
+	statement_sequence();
+	MATCH(KEY_END);
+
+	leaving("for statement");
+}
+
+void expression() {
+	entering("expression");
+
+	switch (currentToken) {
+		case (LPAREN): {
+			MATCH(LPAREN);
+			expression();
+			MATCH(RPAREN);
+			break;
+		}
+		case (NOT): {
+			MATCH(NOT);
+			expression();
+			break;
+		}
+		case (IDENT): {
+			variable_designator();
+			expression1();
+			break;
+		}
+		case (INTEGER):
+		case (REAL):
+		case (CHAR):
+		case (STRING): {
+			constant_literal();
+			expression1();
+			break;
+		}
+		default: {
+			yyerror("syntax error during expression parsing");
+		}
+	}
+
+	leaving("expression");
+}
+
+void expression1() {
+	switch (currentToken) {
+		case (EQ):
+			MATCH(EQ);
+			expression();
+			break;
+		case (NE):
+			MATCH(NE);
+			expression();
+			break;
+		case (LE):
+			MATCH(LE);
+			expression();
+			break;
+		case (GE):
+			MATCH(GE);
+			expression();
+			break;
+		case (LEQ):
+			MATCH(LEQ);
+			expression();
+			break;
+		case (GEQ):
+			MATCH(GEQ);
+			expression();
+			break;
+		case (PLUS):
+			MATCH(PLUS);
+			expression();
+			break;
+		case (MINUS):
+			MATCH(MINUS);
+			expression();
+			break;
+		case (OR):
+			MATCH(OR);
+			expression();
+			break;
+		case (ASTERISK):
+			MATCH(ASTERISK);
+			expression();
+			break;
+		case (SLASH):
+			MATCH(SLASH);
+			expression();
+			break;
+		case (DIV):
+			MATCH(DIV);
+			expression();
+			break;
+		case (MOD):
+			MATCH(MOD);
+			expression();
+			break;
+		case (AND):
+			MATCH(AND);
+			expression();
+			break;
+		default: {}
+	}
+}
+
+void constant_literal() {
+	entering("constant literal");
+
+	switch (currentToken) {
+		case (INTEGER): {
+			MATCH(INTEGER);
+			break;
+		}
+		case (REAL): {
+			MATCH(REAL);
+			break;
+		}
+		case (CHAR): {
+			MATCH(CHAR);
+			break;
+		}
+		case (STRING): {
+			MATCH(STRING);
+			break;
+		}
+		default: {}
+	}
+
+	leaving("constant literal");
 }
