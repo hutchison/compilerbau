@@ -250,9 +250,11 @@ void block() {
 
 	declaration();
 
-	MATCH(KEY_BEGIN);
-
-	statement_sequence();
+	/* KEY_BEGIN ist optional mit dazugehöriger statement_sequence */
+	if (currentToken == KEY_BEGIN) {
+		MATCH(KEY_BEGIN);
+		statement_sequence();
+	}
 
 	MATCH(KEY_END);
 
@@ -475,7 +477,11 @@ void statement() {
 	entering("statement");
 
 	switch (currentToken) {
-		case (SEMICOLON): {
+		case (SEMICOLON):
+		case (KEY_ELSIF):
+		case (KEY_END):
+		case (KEY_UNTIL):
+		case (KEY_ELSE): {
 			empty_statement();
 			break;
 		}
@@ -557,11 +563,34 @@ void if_statement() {
 	expression();
 	MATCH(KEY_THEN);
 	statement_sequence();
-	/* TODO: elsif */
-	/* TODO: else */
+
+	if (currentToken == KEY_ELSIF) {
+		elsif_statement();
+	}
+
+	if (currentToken == KEY_ELSE) {
+		else_statement();
+	}
+
 	MATCH(KEY_END);
 
 	leaving("if statement");
+}
+
+void elsif_statement() {
+	MATCH(KEY_ELSIF);
+	expression();
+	MATCH(KEY_THEN);
+	statement_sequence();
+
+	if (currentToken == KEY_ELSIF) {
+		elsif_statement();
+	}
+}
+
+void else_statement() {
+	MATCH(KEY_ELSE);
+	statement_sequence();
 }
 
 void while_statement() {
@@ -620,7 +649,6 @@ void expression() {
 		}
 		case (IDENT): {
 			variable_designator();
-			expression1();
 			break;
 		}
 		case (INTEGER):
@@ -628,13 +656,13 @@ void expression() {
 		case (CHAR):
 		case (STRING): {
 			constant_literal();
-			expression1();
 			break;
 		}
 		default: {
 			yyerror("syntax error during expression parsing");
 		}
 	}
+	expression1();
 
 	leaving("expression");
 }
@@ -697,7 +725,7 @@ void expression1() {
 			MATCH(AND);
 			expression();
 			break;
-		default: {}
+		default: { /* kein Rest vorhanden */ }
 	}
 }
 

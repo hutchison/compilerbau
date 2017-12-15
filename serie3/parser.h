@@ -60,6 +60,8 @@ void assignment_statement();
 void function_call();
 void return_statement();
 void if_statement();
+void elsif_statement();
+void else_statement();
 void while_statement();
 void repeat_statement();
 void for_statement();
