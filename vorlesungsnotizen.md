@@ -54,3 +54,8 @@ Dazu noch Symboltabelle und Fehlerdiagnose
   repräsentieren verschiedene Klassen
 * Vorteil von 1: kleinere Automaten (= kleineres Programm)
 * Vorteil von 2: weniger Laufzeit
+
+# Theorie für den 26.1.2018
+* 3-Adresscode
+* Registerallokation
+* *keine* statische Analyse
