@@ -55,6 +55,12 @@ Dazu noch Symboltabelle und Fehlerdiagnose
 * Vorteil von 1: kleinere Automaten (= kleineres Programm)
 * Vorteil von 2: weniger Laufzeit
 
+## Syntaktische Analyse
+
+### Top-Down-Parsing
+
+
+
 # Theorie für den 26.1.2018
 * 3-Adresscode
 * Registerallokation
