@@ -1,0 +1,161 @@
+\documentclass[
+%% alle weiteren Papierformat einstellbar:
+a4paper, %apaper,
+%% keine Seitenzahlen:
+%empty,
+%% Schriftgröße (12pt, 11pt (Standard)):
+11pt,
+%% kleinere Überschriften:
+%smallheadings,
+]
+{scrartcl}
+
+\input{packages.latex}
+
+%\fancyhead[R]{Klausur der MBTler, WS 2012/2013}
+
+% \title{Klausurlösung der Experimentalphysik für MBTler}
+% \subtitle{WS 2012/2013}
+% \author{Autorenkollektiv „Olaf“}
+
+% \newenvironment{lösung}{\color{blue}}{\color{black}}
+
+\newcommand{\first}{\textsc{First}}
+\newcommand{\follow}{\textsc{Follow}}
+
+\begin{document}
+
+\section{Syntaktische Analyse}
+\label{sec:syntaktische_analyse}
+
+\subsection{Top-Down-Parsing}
+\label{sub:top_down_parsing}
+
+\subsubsection{First- und Follow-Mengen}
+\label{ssub:first_und_follow_mengen}
+
+Um $\first(X)$ für alle grammatikalischen Symbole $X$ zu berechnen, wende die
+folgenden Regeln an, bis kein Terminalsymbol oder $\epsilon$ mehr zu einer
+$\first$-Menge hinzugefügt werden kann:
+\begin{enumerate}
+  \item Wenn $X$ ein Terminal ist, dann ist $\first(X) = \{ X
+    \}$.\label{first-mengen:terminal}
+  \item Wenn es eine Produktionsregel $X \rightarrow \epsilon$ gibt, dann füge
+    $\epsilon$ zu $\first(X)$ hinzu.\label{first-mengen:leeres_wort}
+  \item Wenn $X$ ein Nichtterminal und $X \rightarrow Y_1 Y_2 \cdots Y_k$ eine
+    Produktionsregel für ein $k \geq 1$ ist, dann füge $a$ zu $\first(X)$ hinzu,
+    wenn für ein $i$ dieses $a$ in $\first(Y_i)$ und $\epsilon$ in allen
+    $\first(Y_1), \ldots, \first(Y_{i-1})$ ist.\label{first-mengen:induktion}
+\end{enumerate}
+Das reicht mir noch nicht, daher nehm ich noch die Definition aus den Folien
+her:
+\begin{align*}
+  \first(\epsilon) & = \{ \epsilon \}\\
+  \first(x) & = \{ x \} & \text{für Terminalsymbol $x$}\\
+  \first(h) & = \bigcup\limits_{h \rightarrow w \ \in \ R} \first(w)\\
+  \first(w_1 w_2) & = \begin{cases}
+    \first(w_1), & \text{falls aus $w_1$ nicht $\epsilon$ ableitbar ist}\\
+    \first(w_1) \setminus \{ \epsilon \} \cup \first(w_2), & \text{falls doch}
+  \end{cases}
+\end{align*}
+
+Nehmen wir mal die folgende Grammatik her:
+\begin{align*}
+  E  & \rightarrow T \ E'\\
+  E' & \rightarrow + \ T \ E' \mid \epsilon\\
+  T  & \rightarrow F \ T'\\
+  T' & \rightarrow * \ F \ T' \mid \epsilon\\
+  F  & \rightarrow ( \ E \ ) \mid \textbf{id}
+\end{align*}
+Wir bestimmen die $\first$-Mengen. Nach Regel~\ref{first-mengen:leeres_wort}
+muss $\epsilon$ zu $\first(E')$ und $\first(T')$ hinzugefügt werden:
+\begin{align*}
+  \first(E)  & = \{ \}\\
+  \first(E') & = \{ \epsilon \}\\
+  \first(T)  & = \{ \}\\
+  \first(T') & = \{ \epsilon \}\\
+  \first(F)  & = \{ \}
+\end{align*}
+Aus der Regel $\first(h) = \bigcup\limits_{h \rightarrow w \ \in \ R}
+\first(w)$ folgt:
+\begin{align*}
+  \first(E)  & = \{ \}\\
+  \first(E') & = \{ \epsilon, + \}\\
+  \first(T)  & = \{ \}\\
+  \first(T') & = \{ \epsilon, * \}\\
+  \first(F)  & = \{ (, \textbf{id} \}
+\end{align*}
+Da aus $F$ nicht $\epsilon$ ableitbar ist, ist $\first(T) = \first(F)$:
+\begin{align*}
+  \first(E)  & = \{ \}\\
+  \first(E') & = \{ \epsilon, + \}\\
+  \first(T)  & = \{ (, \textbf{id} \}\\
+  \first(T') & = \{ \epsilon, * \}\\
+  \first(F)  & = \{ (, \textbf{id} \}
+\end{align*}
+Gleiches Argument für $E$: weil aus $E$ nicht $\epsilon$ ableitbar ist, ist
+$\first(E) = \first(T)$:
+\begin{align*}
+  \first(E)  & = \{ (, \textbf{id} \}\\
+  \first(E') & = \{ \epsilon, + \}\\
+  \first(T)  & = \{ (, \textbf{id} \}\\
+  \first(T') & = \{ \epsilon, * \}\\
+  \first(F)  & = \{ (, \textbf{id} \}
+\end{align*}
+Nicht vergessen: $\first(\alpha)$ ist die Menge aller Terminale, die am Anfang
+der von $\alpha$ erzeugten Zeichenketten stehen. Wir nehmen hier $\alpha$, weil
+eine $\first$-Menge auch von Terminalen bestimmt werden kann.
+
+Jetzt die $\follow$-Mengen: $\follow(A)$ ist die Menge aller Zeichen, die in
+einer Ableitung unmittelbar hinter $A$ stehen können. Hierfür gelten folgende
+Regeln:
+\begin{enumerate}
+  \item $\$ \in \follow(S)$, wobei $S$ das Startsymbol und \$ das Ende der
+    Eingabe symbolisiert.\label{follow-mengen:1}
+  \item Bei einer Regel der Form $A \rightarrow \alpha B \beta$ ist alles aus
+    $\first(\beta) \setminus \epsilon$ in $\follow(B)$.\label{follow-mengen:2}
+  \item Bei einer Regel $A \rightarrow \alpha B$ oder bei $A \rightarrow \alpha
+    B \beta$, wobei $\epsilon \in \first(\beta)$, ist alles aus $\follow(A)$ in
+    $\follow(B)$.\label{follow-mengen:3}
+\end{enumerate}
+Schauen wir mal, ob wir auch die $\follow$-Mengen bestimmen können. Die erste
+Regel gilt nur für das Startsymbol $E$:
+\begin{align*}
+  \follow(E)  & = \{ \$ \}\\
+  \follow(E') & = \{ \}\\
+  \follow(T)  & = \{ \}\\
+  \follow(T') & = \{ \}\\
+  \follow(F)  & = \{ \}
+\end{align*}
+Bei der zweiten Regel holen wir uns aus den $\first$-Mengen die ersten Elemente.
+Aus der Produktionsregel $E \rightarrow T \ E'$ und $\first(E') = \{ \epsilon, +
+\}$ können wir daher schließen, dass $\follow(T) = \{ + \}$ ist. Dies auch noch
+auf die anderen angewandt, führt zu
+\begin{align*}
+  \follow(E)  & = \{ \$ , ) \}\\
+  \follow(E') & = \{ \}\\
+  \follow(T)  & = \{ + \}\\
+  \follow(T') & = \{ \}\\
+  \follow(F)  & = \{ * \}
+\end{align*}
+Die Produktionsregeln zu $E'$ und $T'$ würden nur die $\follow$-Mengen von $T$
+und $F$ befallen, aber die haben wir ja gerade bestimmt.
+
+Die dritte Regel auf $E \rightarrow T \ E'$ angewandt, führt uns einerseits zu
+$\follow(E') = \{ \$, ) \}$ und weil $\epsilon \in \first(E')$ ist, ist alles
+aus $\follow(E)$ auch in $\follow(T)$. Heißt: $\follow(T) = \{ +, \$, ) \}$.
+Auf $T \rightarrow F \ T'$ angewandt, bringt sie uns $\follow(T') = \{ +, \$, )
+\}$.
+Auf $T' \rightarrow * \ F \ T'$ angewandt, bringt sie uns $\follow(F) = \{ *, +,
+\$, ) \}$, weil $\epsilon$ in $\first(T')$ enthalten ist.
+
+Bringt uns erstmal folgendes Zwischenergebnis:
+\begin{align*}
+  \follow(E)  & = \{ \$ , ) \}\\
+  \follow(E') & = \{ \$, ) \}\\
+  \follow(T)  & = \{ +, \$, ) \}\\
+  \follow(T') & = \{ +, \$, ) \}\\
+  \follow(F)  & = \{ *, +, \$, ) \}
+\end{align*}
+
+\end{document}

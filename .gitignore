@@ -4,3 +4,11 @@ manuals/*.pdf
 moco
 serie2/musterloesung/
 serie*/*.pdf
+
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.pdf
+*.xdv
